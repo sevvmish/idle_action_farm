@@ -7,6 +7,7 @@ public class ReadyWheatPack : MonoBehaviour
 {
     private float angle;
     private BoxCollider boxCollider;
+    private bool isRotating = true;
     
     private void OnEnable()
     {
@@ -19,10 +20,18 @@ public class ReadyWheatPack : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        angle += Time.deltaTime * 40f;
-        transform.rotation = Quaternion.  AngleAxis(angle, Vector3.up);        
+        if (isRotating)
+        {
+            angle += Time.deltaTime * 40f;
+            transform.rotation = Quaternion.AngleAxis(angle, Vector3.up);
+        }                
     }
 
+    public void TakenByPlayer()
+    {
+        isRotating = false;
+        boxCollider.enabled = false;        
+    }
    
 
     private void SetReadyToInteract()
