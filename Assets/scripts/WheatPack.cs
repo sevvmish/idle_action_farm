@@ -13,7 +13,7 @@ public class WheatPack : MonoBehaviour
 
     private bool isCoolDownForTrigger;
     private int currentChopsBeforeCutOff;
-    private DateTime lastMow;    
+     
     private Transform[] wheats = new Transform[6];
     private WheatData[] initData = new WheatData[6];
 
@@ -21,6 +21,7 @@ public class WheatPack : MonoBehaviour
     private float timeForWheatGrow = 10f;
 
     private BoxCollider boxCollider;
+    private GameObject chopParticleEffect; 
 
     private void OnEnable()
     {
@@ -30,13 +31,22 @@ public class WheatPack : MonoBehaviour
         boxCollider = GetComponent<BoxCollider>();
         boxCollider.enabled = true;
 
+        chopParticleEffect = transform.GetChild(8).gameObject;
+        chopParticleEffect.SetActive(false);
+
         for (int i = 0; i < wheats.Length; i++)
         {            
             wheats[i] = transform.GetChild(i);
             initData[i] = new WheatData(wheats[i].localPosition, wheats[i].rotation, wheats[i].localScale);            
         }
-               
-        lastMow = DateTime.Now;
+
+        //make unique materials
+        for (int i = 0; i < wheats.Length; i++)
+        {
+            Material newMaterial = Instantiate(transform.GetChild(i).GetComponent<MeshRenderer>().material);
+            newMaterial.SetFloat("color_slider", 1f);
+            wheats[i].GetComponent<MeshRenderer>().material = newMaterial;
+        }
     }
 
        
@@ -52,21 +62,30 @@ public class WheatPack : MonoBehaviour
 
     private void ChopThisPack()
     {
+        
         StartCoroutine(coolDownForCutOff());
+        StartCoroutine(startChopParticleEffect());
 
         currentChopsBeforeCutOff--;
 
         if (currentChopsBeforeCutOff == 0)
         {
             boxCollider.enabled = false;
-            ChopEffect();
-            StartCoroutine(growAgain());
-            StartCoroutine(createReadyPack());
+            StartCoroutine(ChopEffect());
+            
         }
         
     }
 
-    private void ChopEffect() 
+    private IEnumerator startChopParticleEffect()
+    {
+        if (chopParticleEffect.activeSelf) chopParticleEffect.SetActive(false);
+        chopParticleEffect.SetActive(true);
+        yield return new WaitForSeconds(2);
+        chopParticleEffect.SetActive(false);
+    }
+
+    private IEnumerator ChopEffect() 
     {
         Vector3 new_position = new Vector3(transform.position.x, transform.position.y+0.1f, transform.position.z);
         Sequence seq = DOTween.Sequence();
@@ -90,6 +109,11 @@ public class WheatPack : MonoBehaviour
             seq.Join(wheats[i].transform.DOLocalMove(Vector3.zero, 0.01f, false));            
         }
 
+        StartCoroutine(createReadyPack());
+
+        yield return new WaitForSeconds(timeForMowAnimation*2);
+
+        StartCoroutine(growAgain());
         
     }
 
@@ -102,30 +126,50 @@ public class WheatPack : MonoBehaviour
 
     private IEnumerator createReadyPack()
     {
-        yield return new WaitForSeconds(timeForMowAnimation * 1.5f);
+        
+        yield return new WaitForSeconds(timeForMowAnimation);
         GameObject pack = Instantiate(Resources.Load<GameObject>("ReadyWheatStack"), Vector3.zero, Quaternion.identity, transform);
         pack.transform.localPosition = Vector3.zero;
     }
 
     private IEnumerator growAgain()
     {
-        yield return new WaitForSeconds(2f);
+        
+        yield return new WaitForSeconds(Time.deltaTime);
+
         Sequence seq1 = DOTween.Sequence();
+        
+        for (int i = 0; i < wheats.Length; i++)
+        {
+            wheats[i].GetComponent<MeshRenderer>().material.SetFloat("color_slider", 0);
+            seq1.Join(wheats[i].transform.DOScale(Vector3.zero, 0));
+            seq1.Join(wheats[i].transform.DOLocalMove(initData[i].position, 0, false));
+            seq1.Join(wheats[i].transform.DORotate(initData[i].rotation.eulerAngles, 0, RotateMode.Fast));
+            seq1.Join(wheats[i].transform.DOScaleX(initData[i].scale.x, 0));            
+        }
 
         for (int i = 0; i < wheats.Length; i++)
         {
-            seq1.Join(wheats[i].transform.DOLocalMove(initData[i].position, 0.01f, false));
-            seq1.Join(wheats[i].transform.DORotate(initData[i].rotation.eulerAngles, 0.01f, RotateMode.Fast));
-            seq1.Join(wheats[i].transform.DOScaleX(initData[i].scale.x, 0.01f));
-            seq1.Join(wheats[i].transform.DOScaleY(initData[i].scale.y, timeForWheatGrow - 2f));
-            seq1.Join(wheats[i].transform.DOScaleZ(initData[i].scale.z, timeForWheatGrow - 2f));
+            seq1.Join(wheats[i].transform.DOScaleY(initData[i].scale.y * 0.6f, timeForWheatGrow * 0.9f));
+            seq1.Join(wheats[i].transform.DOScaleZ(initData[i].scale.z * 0.6f, timeForWheatGrow * 0.9f));
+            seq1.Join(wheats[i].GetComponent<MeshRenderer>().material.DOFloat(0.8f, "color_slider", timeForWheatGrow * 0.9f));
         }
 
-        yield return new WaitForSeconds(timeForWheatGrow - 2f);
+        yield return new WaitForSeconds(timeForWheatGrow * 0.9f);
+
+        for (int i = 0; i < wheats.Length; i++)
+        {
+            seq1.Join(wheats[i].transform.DOScaleY(initData[i].scale.y, timeForWheatGrow * 0.1f));
+            seq1.Join(wheats[i].transform.DOScaleZ(initData[i].scale.z, timeForWheatGrow * 0.1f));
+            seq1.Join(wheats[i].GetComponent<MeshRenderer>().material.DOFloat(1, "color_slider", 0.1f));
+        }
+
+        yield return new WaitForSeconds(timeForWheatGrow * 0.1f);
 
         currentChopsBeforeCutOff = HowManyChopsBeforeCutOff;
         boxCollider.enabled = true;
     }
+
 
     public struct WheatData
     {

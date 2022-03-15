@@ -16,7 +16,7 @@ public class BackPackForWheat : MonoBehaviour
     private void Start()
     {        
         maxBagCapacity = _settings.MaxBagCapacity;
-        delayForGivingAwayPacks = _settings.delayForGivingAwayPacks;
+        delayForGivingAwayPacks = 0.02f;
     }
 
     public bool isReadyToTakeStack()
@@ -80,6 +80,7 @@ public class BackPackForWheat : MonoBehaviour
         isGivingAwayBusy = true;
         yield return new WaitForSeconds(delayForGivingAwayPacks);
         isGivingAwayBusy = false;
+        GameObject.Find("Canvas").GetComponent<UIManager>().SetEffectOfCoins();
     }
     
 

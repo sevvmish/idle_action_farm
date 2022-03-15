@@ -8,13 +8,15 @@ public class ReadyWheatPack : MonoBehaviour
     private float angle;
     private BoxCollider boxCollider;
     private bool isRotating = true;
+
+    [SerializeField]private float timeForReadyPackToBeActive = 0.4f;
     
     private void OnEnable()
     {
         boxCollider = GetComponent<BoxCollider>();
         boxCollider.enabled = false;
-        Invoke("SetReadyToInteract", 0.5f);
-        transform.DOShakeScale(0.5f);
+        Invoke("SetReadyToInteract", timeForReadyPackToBeActive);
+        transform.DOShakeScale(timeForReadyPackToBeActive);
     }
 
     // Update is called once per frame

@@ -11,13 +11,13 @@ public class PlayerManager : MonoBehaviour
 
     private CharacterController playerCharController;
     [SerializeField] private float playerSpeed;
-    [SerializeField] private int CollectedWheatPackNumber;
+    [SerializeField] private int CollectedWheatPackAmount;
     [SerializeField] private int maxBagCapacity;
     [SerializeField] private float timeBeforeActivateScytheMow = 0.8f;
     [SerializeField] private float timeForMowActiveWork = 0.15f;
 
     private CurrentPlayerState PlayerState;
-    
+    private UIManager UI;
     private SphereCollider scytheCollider;
     private GameObject Scythe;
 
@@ -42,6 +42,7 @@ public class PlayerManager : MonoBehaviour
 
         maxBagCapacity = _settings.MaxBagCapacity;
         bag = GameObject.Find("BackPack").GetComponent<BackPackForWheat>();
+        UI = GameObject.Find("Canvas").GetComponent<UIManager>();
     }
 
     // Update is called once per frame
@@ -62,7 +63,7 @@ public class PlayerManager : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("wheat") && CollectedWheatPackNumber < maxBagCapacity)
+        if (other.CompareTag("wheat") && CollectedWheatPackAmount < maxBagCapacity)
         {
             Mow();
         }
@@ -70,7 +71,7 @@ public class PlayerManager : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
-        if (other.CompareTag("wheat") && CollectedWheatPackNumber<maxBagCapacity)
+        if (other.CompareTag("wheat") && CollectedWheatPackAmount < maxBagCapacity)
         {            
             Mow();
         }
@@ -100,12 +101,14 @@ public class PlayerManager : MonoBehaviour
 
     private void giveAwayReadyWheatPack(Transform placeToGiveAwayWheat)
     {
-        CollectedWheatPackNumber = bag.GiveAwayReadyWheatPack(placeToGiveAwayWheat);
+        CollectedWheatPackAmount = bag.GiveAwayReadyWheatPack(placeToGiveAwayWheat);
+        UI.SetWheatAmount(CollectedWheatPackAmount);
     }
 
     private void ObtainReadyWheatPack(GameObject pack)
     {
-        CollectedWheatPackNumber = bag.TakeReadyWheatPack(pack.GetComponent<ReadyWheatPack>());
+        CollectedWheatPackAmount = bag.TakeReadyWheatPack(pack.GetComponent<ReadyWheatPack>());
+        UI.SetWheatAmount(CollectedWheatPackAmount);
     }
 
     private void Run()
