@@ -82,7 +82,7 @@ public class UIManager : MonoBehaviour
         if (!isCoinImageBusy)
         {
             isCoinImageBusy = true;
-            coinImage.transform.DOShakeScale(0.3f);
+            coinImage.transform.GetChild(0).transform.DOShakeScale(0.3f);
             yield return new WaitForSeconds(0.3f);
             isCoinImageBusy = false;
         }
